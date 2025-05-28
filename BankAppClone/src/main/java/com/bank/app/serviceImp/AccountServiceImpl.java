@@ -42,7 +42,7 @@ public class AccountServiceImpl implements AccountService {
 		Customer customer = customerRepository.findByCellphoneNumber(cellphoneNumber).orElse(null);
 
 		if (customer.equals(null))
-			throw new ClientException("User not found");
+			throw new ClientException("User not found.");
 
 		Account currentAccount = Account.builder().accountNumber(account.generateAccountNumber())
 				.accountType(AccountType.CURRENT).customerId(customer.getId()).balance(new BigDecimal(00.00)).build();

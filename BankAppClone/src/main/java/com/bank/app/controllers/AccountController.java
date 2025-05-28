@@ -34,17 +34,11 @@ import lombok.RequiredArgsConstructor;
 public class AccountController {
 	private final AccountService accountService;
 
-    @PostMapping("/{cellphoneNumber}")
-    public ResponseEntity<Void> addAccountForUser(@PathVariable String cellphoneNumber) {
-        accountService.addAccountForUser(cellphoneNumber);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @GetMapping("/hello")
-    public String sahe(){
-        System.out.println("Yes we got it.....");
-        return "Hi thereeeeee";
-    }
+//    @PostMapping("/{cellphoneNumber}")
+//    public ResponseEntity<Void> addAccountForUser(@PathVariable String cellphoneNumber) {
+//        accountService.addAccountForUser(cellphoneNumber);
+//        return ResponseEntity.status(HttpStatus.CREATED).build();
+//    }
 
     @GetMapping("/{accountNumber}/balance")
     public ResponseEntity<BigDecimal> getAccountBalance(@PathVariable("accountNumber") int accountNumber) {
@@ -53,7 +47,7 @@ public class AccountController {
     
     @GetMapping("/viewAll")
     public ResponseEntity<List<Account>> viewAllAccounts(){
-    	return ResponseEntity.ok(accountService.getAllAccounts());
+    	return ResponseEntity.status(HttpStatus.ACCEPTED).body(accountService.getAllAccounts());
     }
     
     @GetMapping("/user/{cellphone}")

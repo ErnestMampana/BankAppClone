@@ -24,8 +24,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,11 +51,12 @@ public class CustomerServiceImpl implements CustomerService {
 	ModelMapper modelMapper = new ModelMapper();
 
 	@Override
-	public CustomerDto onBoardingCustomer (CustomerDto customerDto) {
+	public CustomerDto onBoardingCustomer(CustomerDto customerDto) {
 
-		if (customerRepository.findByCellphoneNumber(customerDto.getCellphoneNumber()).isPresent())
+		customerRepository.findByCellphoneNumber(customerDto.getCellphoneNumber()).ifPresent(cr -> {
 			throw new ClientException(
 					"Cellphone number " + customerDto.getCellphoneNumber() + " has already been taken");
+		});
 
 		Customer customer = modelMapper.map(customerDto, Customer.class);
 		customer.setPin(passwordEncoder.encode(Integer.toString(customerDto.getPin())));
@@ -110,26 +109,22 @@ public class CustomerServiceImpl implements CustomerService {
 
 	@Override
 	public List<Account> login(AuthenticationRequestDto loginDto) throws AccountNotFoundException {
-		var user = customerRepository.findByCellphoneNumber(loginDto.getCellphoneNumber());
 
-		if (user != null) {
+		var user = customerRepository.findByCellphoneNumber(loginDto.getCellphoneNumber())
+				.orElseThrow(() -> new AccountNotFoundException("Account not found"));
 
-			authenticationManager.authenticate(
-					new UsernamePasswordAuthenticationToken(loginDto.getCellphoneNumber(), loginDto.getPin()));
+		authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginDto.getCellphoneNumber(), loginDto.getPin()));
 
-			log.info("Useraccount Logged In ================= {} {}", user.get().getName(), user.get().getSurname());
+		log.info("Useraccount Logged In ================= {} {}", user.getName(), user.getSurname());
 
-		} else {
-			throw new AccountNotFoundException("Account not found");
-		}
+		var jwtToken = jwtService.generateToken(user);
 
-		var jwtToken = jwtService.generateToken(user.get());
+		revokeAllUserTokens(user);
 
-		revokeAllUserTokens(user.get());
+		saveUserToken(user, jwtToken);
 
-		saveUserToken(user.get(), jwtToken);
-
-		return accountServiceImpl.viewAccountsForUser(user.get().getCellphoneNumber());
+		return accountServiceImpl.viewAccountsForUser(user.getCellphoneNumber());
 	}
 
 	@Override
