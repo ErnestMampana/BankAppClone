@@ -15,5 +15,6 @@ import com.bank.app.models.Transaction;
  */
 public interface NotificationService {
 	void sendTransactionNotification(Transaction transaction);
+	void sendExternalTransactionNotification(Transaction transaction);
 	String sendSimpleMail(EmailDetails details);
 }

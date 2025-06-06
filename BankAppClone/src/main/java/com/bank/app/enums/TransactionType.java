@@ -12,5 +12,6 @@ public enum TransactionType {
     WITHDRAWAL,
     TRANSFER,
     MONEY_IN,
-    DEBIT
+    DEBIT,
+    WELCOME
 }

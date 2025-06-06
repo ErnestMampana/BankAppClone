@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -30,7 +29,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/accounts")
+@RequestMapping("/api/v1/accounts")
 public class AccountController {
 	private final AccountService accountService;
 
@@ -40,20 +39,20 @@ public class AccountController {
 //        return ResponseEntity.status(HttpStatus.CREATED).build();
 //    }
 
-    @GetMapping("/{accountNumber}/balance")
-    public ResponseEntity<BigDecimal> getAccountBalance(@PathVariable("accountNumber") int accountNumber) {
-        return ResponseEntity.ok(accountService.getAccountBalance(accountNumber));
-    }
-    
-    @GetMapping("/viewAll")
-    public ResponseEntity<List<Account>> viewAllAccounts(){
-    	return ResponseEntity.status(HttpStatus.ACCEPTED).body(accountService.getAllAccounts());
-    }
-    
-    @GetMapping("/user/{cellphone}")
-    public ResponseEntity<List<Account>> viewAccountsForUser(@PathVariable("cellphone") String cellphone){
-    	return ResponseEntity.ok(accountService.viewAccountsForUser(cellphone));
-    }
+	@GetMapping("/{accountNumber}/balance")
+	public ResponseEntity<BigDecimal> getAccountBalance(@PathVariable("accountNumber") int accountNumber) {
+		return ResponseEntity.ok(accountService.getAccountBalance(accountNumber));
+	}
+
+	@GetMapping("/viewAll")
+	public ResponseEntity<List<Account>> viewAllAccounts() {
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(accountService.getAllAccounts());
+	}
+
+	@GetMapping("/user/{cellphone}")
+	public ResponseEntity<List<Account>> viewAccountsForUser(@PathVariable("cellphone") String cellphone) {
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(accountService.viewAccountsForUser(cellphone));
+	}
 
 //    @GetMapping("/{accountNumber}/transactions")
 //    public ResponseEntity<List<Transaction>> getTransactionHistory(@PathVariable float accountNumber, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {

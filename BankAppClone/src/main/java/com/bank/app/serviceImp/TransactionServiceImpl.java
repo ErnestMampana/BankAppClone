@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bank.app.dtos.DebitCreditDto;
 import com.bank.app.dtos.TransactionDto;
 import com.bank.app.enums.AccountType;
 import com.bank.app.enums.TransactionType;
@@ -88,6 +89,7 @@ public class TransactionServiceImpl implements TransactionService {
 	public void internalMoneyTransfer(int sourceAccNumber, int destinationAccNumber, BigDecimal amount,
 			String reference) {
 
+		log.info("Internal trasnfer initiated");
 		Account sourceAccount = accountService.getAccountByAccountNumber(sourceAccNumber); // .orElse(null);
 
 		Account destinationAccount = accountService.getAccountByAccountNumber(destinationAccNumber); // orElse(null);
@@ -95,8 +97,8 @@ public class TransactionServiceImpl implements TransactionService {
 		if (destinationAccount.getCustomerId() != sourceAccount.getCustomerId())
 			throw new ClientException("This operation is for internal transfer only");
 
-		if (sourceAccount.getBalance().compareTo(amount) < 1)
-			throw new ClientException("Payment cannot exceed available balance");
+		if (sourceAccount.getBalance().compareTo(amount) < 0)
+			throw new ClientException("Insufficient balance for this payment");
 
 		if (destinationAccount.equals(null))
 			throw new ClientException("Invalid destination account number");
@@ -110,11 +112,15 @@ public class TransactionServiceImpl implements TransactionService {
 
 		// This transaction is for the account that send money or making payment
 		transactionDto.setType(TransactionType.TRANSFER);
+		log.info(""+transactionDto.getDestinationAccountNumber());
+		log.info(""+transactionDto.getSourceAccountNumber());
+		log.info(""+sourceAccount.getAccountNumber());
 		this.createTransaction(transactionDto, sourceAccount.getAccountNumber());
 
 		// This transaction is for the account number the money is being sent to
 		transactionDto.setType(TransactionType.MONEY_IN);
 		this.createTransaction(transactionDto, destinationAccount.getAccountNumber());
+		log.info("Transaction done.");
 
 	}
 
@@ -126,7 +132,7 @@ public class TransactionServiceImpl implements TransactionService {
 				: accountService.getAccountByAccountNumber(dto.getSourceAccountNumber()));
 
 		transaction.setDestinationAccount(dto.getDestinationAccountNumber() == 0 ? null
-				: accountService.getAccountByAccountNumber(dto.getSourceAccountNumber()));
+				: accountService.getAccountByAccountNumber(dto.getDestinationAccountNumber()));
 		transaction.setAmount(dto.getAmount());
 		transaction.setType(dto.getType());
 		transaction.setTransactionDate(LocalDateTime.now());
@@ -144,6 +150,8 @@ public class TransactionServiceImpl implements TransactionService {
 
 		return transaction;
 	}
+	
+	
 
 	@Override
 	public List<Transaction> getAllTransactions() {
@@ -153,7 +161,7 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@Override
 	public List<TransactionDto> getTransactionsByAccountNumber(int accountNumber) {
-		log.info("============================ Fetching transactions for accoount number {}", accountNumber);
+		log.info("Fetching transactions for accoount number {}", accountNumber);
 		Account account = accountService.getAccountByAccountNumber(accountNumber);
 
 		List<Transaction> transactions = transactionRepository.findAllByAccountNumber(account.getAccountNumber()).get();
@@ -177,7 +185,7 @@ public class TransactionServiceImpl implements TransactionService {
 	@Transactional
 	public String debitCustomerAccount(int accountNumber, BigDecimal amount, String reference) {
 
-		String message = "debit was successful";
+		String message = "Debit was successful.";
 
 		Account account = accountService.getAccountByAccountNumber(accountNumber);
 
@@ -197,7 +205,7 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	@Transactional
 	public String creditCustomerAccount(int accountNumber, BigDecimal amount, String reference) {
-		String message = "credit was successful";
+		String message = "Credit was successful";
 		Account account = accountService.getAccountByAccountNumber(accountNumber);
 
 		account.setBalance(account.getBalance().add(amount));
@@ -205,7 +213,7 @@ public class TransactionServiceImpl implements TransactionService {
 		TransactionDto dto = TransactionDto.builder().amount(amount).destinationAccountNumber(accountNumber)
 				.type(TransactionType.MONEY_IN).reference(reference).build();
 
-		this.createTransaction(dto, accountNumber);
+		this.createDepositTransaction(dto);
 
 		return message;
 	}
@@ -214,10 +222,14 @@ public class TransactionServiceImpl implements TransactionService {
 	public List<TransactionDto> getFilteredTransactionsByAccountNumber(int accountNumber, LocalDate startDate,
 			LocalDate endDate) {
 
-		List<Transaction> transactions = transactionRepository.findAllByAccountNumberAndTransactionDateBetween(
-				accountNumber, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay()).get();
+		List<Transaction> transactions = transactionRepository
+				.findAllByAccountNumberAndTransactionDateBetween(accountNumber, startDate.atStartOfDay(),
+						endDate.plusDays(1).atStartOfDay())
+				.orElseThrow(() -> new ClientException("No transactions found for this accnount"));
 
 		List<TransactionDto> transactionsDto = new ArrayList<>();
+		
+//		transactions.forEach(transaction -> transactionsDto.add(modelMapper.map(transactions.get(i), TransactionDto.class)));
 
 		for (int i = 0; i < transactions.size(); i++) {
 
@@ -229,6 +241,38 @@ public class TransactionServiceImpl implements TransactionService {
 
 		}
 		return transactionsDto;
+	}
+	
+	@Override
+	public Transaction createDepositTransaction(TransactionDto dto) {
+
+		Transaction transaction = new Transaction();
+//		transaction.setSourceAccount(dto.getSourceAccountNumber() == 0 ? null
+//				: accountService.getAccountByAccountNumber(dto.getSourceAccountNumber()));
+
+
+		transaction.setDestinationAccount(accountService.getAccountByAccountNumber(dto.getDestinationAccountNumber()));
+
+		transaction.setAmount(dto.getAmount());
+
+		transaction.setType(dto.getType());
+
+		transaction.setTransactionDate(LocalDateTime.now());
+
+		transaction.setAccountNumber(dto.getDestinationAccountNumber());
+
+		transaction.setReference(dto.getReference());
+
+		transactionRepository.save(transaction);
+
+//		String val = "2015-07-18T13:32:56.971-0400";
+//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+//		LocalDateTime dateTime = java.time.LocalDateTime.parse(val, formatter);
+//		System.out.println("===================================="+dateTime);
+//
+		 //notificationService.sendExternalTransactionNotification(transaction);
+
+		return transaction;
 	}
 
 }

@@ -21,6 +21,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Ernest Mampana
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailNotificationService implements NotificationService {
 	
 	private final CustomerService customerService;
@@ -61,6 +63,37 @@ public class EmailNotificationService implements NotificationService {
                          + "Bank X";
 
         // Send the email message to the customer's email address
+        String emailAddress = customer.getEmail();
+        
+		EmailDetails details = EmailDetails.builder().recipient(emailAddress).subject(subject).message(message).build();
+        
+        sendSimpleMail(details);
+		
+	}
+	
+	@Override
+	public void sendExternalTransactionNotification(Transaction transaction) {
+		//Date date = dt.parse(transaction.getTransactionDate());
+		
+
+		 //Get the customer associated with the source account
+        Customer customer = customerService.getCustomerById(transaction.getDestinationAccount().getCustomerId());
+
+        // Construct the email message
+        String subject = "Transaction Notification";
+        String message = "Dear " + customer.getName() + ",\n\n"
+                         + "This is to notify you of a transaction that was performed on your account.\n\n"
+                         + "Transaction Details:\n"
+                         + "-------------------\n"
+                         + "Type: " + transaction.getType() + "\n"
+                         + "Amount: R" + transaction.getAmount() + "\n"
+                         + "Reference: " + transaction.getReference() + "\n"
+                         //+ "Date: " + date + "\n\n"
+                         + "Thank you for banking with us.\n"
+                         + "Bank X";
+
+        // Send the email message to the customer's email address
+        log.info(message);
         String emailAddress = customer.getEmail();
         
 		EmailDetails details = EmailDetails.builder().recipient(emailAddress).subject(subject).message(message).build();

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Random;
 
+import com.bank.app.dtos.TransactionDto;
 import com.bank.app.enums.AccountType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -7,7 +7,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.bank.app.dtos.DebitCreditDto;
 import com.bank.app.dtos.TransactionDto;
+import com.bank.app.models.Account;
 import com.bank.app.models.Transaction;
 
 
@@ -18,6 +20,8 @@ import com.bank.app.models.Transaction;
 public interface TransactionService {
 
 	Transaction createTransaction(TransactionDto transactionDto, int accountNumver);
+	
+	Transaction createDepositTransaction(TransactionDto dto);
 
 	List<Transaction> getAllTransactions();
 	
@@ -32,6 +36,10 @@ public interface TransactionService {
 	String creditCustomerAccount(int accountNumber,BigDecimal amount,String Reference);
 
 	List<TransactionDto> getFilteredTransactionsByAccountNumber(int accountNumber, LocalDate startDate, LocalDate endDate);
+	
+	
+//	String depositMoney(int accountNumber,BigDecimal amount,String reference);
+	
 //
 //	void processTransaction(Transaction transaction);
 ////
